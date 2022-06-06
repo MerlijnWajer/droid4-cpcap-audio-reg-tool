@@ -43,9 +43,11 @@ FILE = '/sys/kernel/debug/regmap/spi0.0/registers'
 if mode == 'dump':
     fp = open(FILE, 'r')
     print(fp.read())
+    fp.close()
 elif mode == 'info':
     fp = open(FILE, 'r')
     data = file_to_regs(fp)
+    fp.close()
     from pprint import pprint
     pprint(data)
 elif mode == 'cmp':
@@ -55,6 +57,8 @@ elif mode == 'cmp':
     fp2 = open(f2, 'r')
     d1 = file_to_regs(fp1)
     d2 = file_to_regs(fp2)
+    fp1.close()
+    fp2.close()
 
     for regname, regs1 in d1.items():
         regs2 = d2[regname]
@@ -71,6 +75,8 @@ elif mode == 'restore':
     d2 = file_to_regs(fp2)
     fp1.seek(0)
     filevals = file_to_vals(fp1)
+    fp1.close()
+    fp2.close()
 
     val = 0
     for regname, regs1 in d1.items():
@@ -88,3 +94,62 @@ elif mode == 'restore':
             fp = open(FILE, 'w')
             fp.write('%s %s' % (reg, filevals[reg]))
             fp.close()
+elif mode == 'get':
+    to_set = sys.argv[2]
+
+    fp = open(FILE, 'r')
+    data = file_to_regs(fp)
+
+    reg_name, reg_bit_name = sys.argv[2].split('.')
+
+    if reg_name not in AUDIO_REG_NAMES:
+        print('Unknown reg')
+        sys.exit(1)
+
+    reg = AUDIO_REG_NAMES.index(reg_name)
+    reg_bits = AUDIO_REG_BITS[reg_name]
+
+    if reg_bit_name not in reg_bits:
+        print('Unknown reg bit')
+        sys.exit(1)
+
+    cur_value = data[reg_name][reg_bit_name]
+    print(cur_value)
+elif mode == 'set':
+    to_set = sys.argv[2]
+    value = int(sys.argv[3])
+
+    fp = open(FILE, 'r')
+    data = file_to_regs(fp)
+    fp.seek(0)
+    filevals = file_to_vals(fp)
+    fp.close()
+
+    reg_name, reg_bit_name = sys.argv[2].split('.')
+
+    if reg_name not in AUDIO_REG_NAMES:
+        print('Unknown reg')
+        sys.exit(1)
+
+    reg_index = AUDIO_REG_NAMES.index(reg_name)
+    reg_bits = AUDIO_REG_BITS[reg_name]
+
+    if reg_bit_name not in reg_bits:
+        print('Unknown reg bit')
+        sys.exit(1)
+
+    cur_value = data[reg_name][reg_bit_name]
+
+    if cur_value != value:
+        print('have to change value')
+        reg_bit_index = AUDIO_REG_BITS[reg_name][reg_bit_name]
+
+        if value == 1:
+            val = int(filevals[AUDIO_REGS[reg_index]],16) | (1 << reg_bit_index)
+        else:
+            val = int(filevals[AUDIO_REGS[reg_index]],16) & ~(1 << reg_bit_index)
+
+        fp = open(FILE, 'w')
+        s = '%s %s' % (AUDIO_REGS[reg_index], hex(val)[2:])
+        fp.write('%s %s' % (AUDIO_REGS[reg_index], hex(val)[2:]))
+        fp.close()

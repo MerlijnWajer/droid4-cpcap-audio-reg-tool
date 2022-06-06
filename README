@@ -1,2 +1,14 @@
 These tools exist only to help debug audio on the droid 4, to improve call audio
-and the driver in general
+and the driver in general.
+
+BE VERY VERY CAREFUL IN HOW YOU USE THIS AND MAKE SURE THAT YOU KNOW WHAT YOU
+ARE DOING
+
+Usage:
+
+python3 regtool.py dump > /tmp/audio-state.txt
+python3 regtool.py info | less
+python3 regtool.py cmp /tmp/audio-state-1.txt /tmp/audio-state-2.txt
+python3 regtool.py restore /tmp/audio_state.txt
+python regtool.py get CPCAP_REG_VAUDIOC.CPCAP_BIT_VAUDIO_MODE1
+python regtool.py set CPCAP_REG_VAUDIOC.CPCAP_BIT_VAUDIO_MODE1 1
